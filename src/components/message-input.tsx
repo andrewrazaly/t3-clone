@@ -5,8 +5,9 @@ import { Paperclip, Globe, ArrowUp } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { type Model } from "./model-selector";
+import { type Language } from "./language-selector";
 
-export function MessageInput({ selectedChatId, selectedModel }: { selectedChatId: string | null; selectedModel: Model }) {
+export function MessageInput({ selectedChatId, selectedModel, selectedLanguage }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language }) {
     const [input, setInput] = React.useState("");
     const [isSearchEnabled, setIsSearchEnabled] = React.useState(false);
     const utils = api.useUtils();
@@ -25,6 +26,7 @@ export function MessageInput({ selectedChatId, selectedModel }: { selectedChatId
             chatId: selectedChatId,
             content: input,
             model: selectedModel.id,
+            language: selectedLanguage.id,
         });
         setInput("");
     };

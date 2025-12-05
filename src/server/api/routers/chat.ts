@@ -41,6 +41,7 @@ export const chatRouter = createTRPCRouter({
                 chatId: z.string(),
                 content: z.string(),
                 model: z.string().optional(),
+                language: z.string().optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
@@ -56,6 +57,9 @@ export const chatRouter = createTRPCRouter({
             let aiContent = "";
 
             const model = input.model ?? "gpt-4o";
+            const languageInstruction = input.language && input.language !== "english"
+                ? `Please respond in ${input.language}. `
+                : "";
 
             try {
                 if (model.startsWith("claude")) {
@@ -64,6 +68,7 @@ export const chatRouter = createTRPCRouter({
                     const message = await anthropic.messages.create({
                         model: model,
                         max_tokens: 1000,
+                        system: languageInstruction,
                         messages: [
                             {
                                 role: "user",
@@ -80,21 +85,35 @@ export const chatRouter = createTRPCRouter({
                 } else if (model.startsWith("gpt")) {
                     if (!env.OPENAI_API_KEY) throw new Error("OpenAI API Key not found");
                     const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+                    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+                        {
+                            role: "user",
+                            content: input.content,
+                        },
+                    ];
+
+                    if (languageInstruction) {
+                        messages.unshift({
+                            role: "system",
+                            content: languageInstruction,
+                        });
+                    }
+
                     const completion = await openai.chat.completions.create({
                         model: model,
-                        messages: [
-                            {
-                                role: "user",
-                                content: input.content,
-                            },
-                        ],
+                        messages: messages,
                     });
                     aiContent = completion.choices[0]?.message?.content ?? "No text response from OpenAI";
                 } else if (model.startsWith("gemini")) {
                     if (!env.GOOGLE_API_KEY) throw new Error("Google API Key not found");
                     const genAI = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
                     const geminiModel = genAI.getGenerativeModel({ model: model });
-                    const result = await geminiModel.generateContent(input.content);
+
+                    const prompt = languageInstruction
+                        ? `${languageInstruction}\n\n${input.content}`
+                        : input.content;
+
+                    const result = await geminiModel.generateContent(prompt);
                     const response = result.response;
                     aiContent = response.text();
                 } else {
