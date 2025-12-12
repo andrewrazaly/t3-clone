@@ -7,23 +7,29 @@ import { api } from "~/trpc/react";
 import { type Model } from "./model-selector";
 import { type Language } from "./language-selector";
 
-export function MessageInput({ selectedChatId, selectedModel, selectedLanguage }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language }) {
+export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, onChatStarted }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language; onChatStarted?: (chatId: string) => void }) {
     const [input, setInput] = React.useState("");
     const [isSearchEnabled, setIsSearchEnabled] = React.useState(false);
     const utils = api.useUtils();
 
     const sendMessage = api.chat.sendMessage.useMutation({
-        onSuccess: async () => {
-            await utils.chat.getMessages.invalidate({ chatId: selectedChatId! });
+        onSuccess: async (data) => {
+            if (selectedChatId) {
+                await utils.chat.getMessages.invalidate({ chatId: selectedChatId });
+            }
             await utils.chat.getAll.invalidate();
+
+            if (data.newChatId && onChatStarted) {
+                onChatStarted(data.newChatId);
+            }
         },
     });
 
     const handleSend = () => {
-        if (!input.trim() || !selectedChatId) return;
+        if (!input.trim()) return;
 
         sendMessage.mutate({
-            chatId: selectedChatId,
+            chatId: selectedChatId ?? undefined,
             content: input,
             model: selectedModel.id,
             language: selectedLanguage.id,
@@ -45,8 +51,8 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage }
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder={selectedChatId ? `Message ${selectedModel.name}...` : "Select a chat to start messaging..."}
-                    disabled={!selectedChatId || sendMessage.isPending}
+                    placeholder={selectedChatId ? `Message ${selectedModel.name}...` : "Send a message to start a new chat..."}
+                    disabled={sendMessage.isPending}
                     className="w-full bg-transparent border-0 focus:ring-0 resize-none min-h-[60px] max-h-[200px] p-4 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] disabled:opacity-50 outline-none"
                     rows={1}
                     style={{ height: "auto" }}
@@ -74,7 +80,7 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage }
 
                     <button
                         onClick={handleSend}
-                        disabled={!selectedChatId || !input.trim() || sendMessage.isPending}
+                        disabled={!input.trim() || sendMessage.isPending}
                         className={cn(
                             "p-2 rounded-lg transition-all duration-200",
                             input.trim()

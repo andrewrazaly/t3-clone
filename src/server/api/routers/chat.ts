@@ -4,18 +4,29 @@ import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "~/env";
+import { TRPCError } from "@trpc/server";
 
 export const chatRouter = createTRPCRouter({
     create: publicProcedure.mutation(async ({ ctx }) => {
+        if (!ctx.auth.userId) {
+            throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
         return ctx.db.chat.create({
             data: {
                 title: "New Chat",
+                userId: ctx.auth.userId,
             },
         });
     }),
 
     getAll: publicProcedure.query(async ({ ctx }) => {
+        if (!ctx.auth.userId) {
+            return [];
+        }
         return ctx.db.chat.findMany({
+            where: {
+                userId: ctx.auth.userId,
+            },
             orderBy: {
                 updatedAt: "desc",
             },
@@ -25,6 +36,19 @@ export const chatRouter = createTRPCRouter({
     getMessages: publicProcedure
         .input(z.object({ chatId: z.string() }))
         .query(async ({ ctx, input }) => {
+            const chat = await ctx.db.chat.findUnique({
+                where: { id: input.chatId },
+            });
+
+            if (!chat) {
+                throw new TRPCError({ code: "NOT_FOUND" });
+            }
+
+            // If chat has a user, ensure it matches the session user
+            if (chat.userId && chat.userId !== ctx.auth.userId) {
+                throw new TRPCError({ code: "UNAUTHORIZED" });
+            }
+
             return ctx.db.message.findMany({
                 where: {
                     chatId: input.chatId,
@@ -38,17 +62,55 @@ export const chatRouter = createTRPCRouter({
     sendMessage: publicProcedure
         .input(
             z.object({
-                chatId: z.string(),
+                chatId: z.string().optional(),
                 content: z.string(),
                 model: z.string().optional(),
                 language: z.string().optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const FREE_MODELS = ["gpt-3.5-turbo", "gemini-1.5-flash"];
+
+            let model = input.model;
+            if (!model) {
+                model = ctx.auth.userId ? "chatgpt-5.1" : "gpt-3.5-turbo";
+            }
+
+            if (!ctx.auth.userId && !FREE_MODELS.includes(model)) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You must be signed in to use this model.",
+                });
+            }
+
+            let chatId = input.chatId;
+
+            if (!chatId) {
+                const newChat = await ctx.db.chat.create({
+                    data: {
+                        title: input.content.slice(0, 30) || "New Chat",
+                        userId: ctx.auth.userId,
+                    },
+                });
+                chatId = newChat.id;
+            }
+
+            const chat = await ctx.db.chat.findUnique({
+                where: { id: chatId },
+            });
+
+            if (!chat) {
+                throw new TRPCError({ code: "NOT_FOUND" });
+            }
+
+            if (chat.userId && chat.userId !== ctx.auth.userId) {
+                throw new TRPCError({ code: "UNAUTHORIZED" });
+            }
+
             // Save user message
             const userMessage = await ctx.db.message.create({
                 data: {
-                    chatId: input.chatId,
+                    chatId: chatId,
                     content: input.content,
                     role: "user",
                 },
@@ -56,7 +118,6 @@ export const chatRouter = createTRPCRouter({
 
             let aiContent = "";
 
-            const model = input.model ?? "gpt-4o";
             const languageInstruction = input.language && input.language !== "english"
                 ? `Please respond in ${input.language}. `
                 : "";
@@ -82,7 +143,7 @@ export const chatRouter = createTRPCRouter({
                     } else {
                         aiContent = "No text response from Claude";
                     }
-                } else if (model.startsWith("gpt")) {
+                } else if (model.startsWith("gpt") || model === "chatgpt-5.1") {
                     if (!env.OPENAI_API_KEY) throw new Error("OpenAI API Key not found");
                     const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
                     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -99,8 +160,10 @@ export const chatRouter = createTRPCRouter({
                         });
                     }
 
+                    const apiModel = model === "chatgpt-5.1" ? "gpt-4o" : model;
+
                     const completion = await openai.chat.completions.create({
-                        model: model,
+                        model: apiModel,
                         messages: messages,
                     });
                     aiContent = completion.choices[0]?.message?.content ?? "No text response from OpenAI";
@@ -127,12 +190,12 @@ export const chatRouter = createTRPCRouter({
             // Save AI response
             const aiMessage = await ctx.db.message.create({
                 data: {
-                    chatId: input.chatId,
+                    chatId: chatId,
                     content: aiContent,
                     role: "assistant",
                 },
             });
 
-            return { userMessage, aiMessage };
+            return { userMessage, aiMessage, newChatId: !input.chatId ? chatId : undefined };
         }),
 });

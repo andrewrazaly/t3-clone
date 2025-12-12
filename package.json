@@ -10,7 +10,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "dev": "next dev --turbo",
+    "dev": "next dev",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "postinstall": "prisma generate",
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.1",
-    "@auth/prisma-adapter": "^2.7.2",
+    "@clerk/nextjs": "^6.36.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.6.0",
     "@t3-oss/env-nextjs": "^0.12.0",
@@ -34,11 +34,11 @@
     "clsx": "^2.1.1",
     "geist": "^1.5.1",
     "lucide-react": "^0.554.0",
-    "next": "^15.2.3",
-    "next-auth": "5.0.0-beta.25",
+    "next": "^15.1.0",
     "openai": "^6.9.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
     "superjson": "^2.2.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^3.24.2"
@@ -46,18 +46,25 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.0.15",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.3",
+    "happy-dom": "^20.0.11",
+    "jsdom": "^27.0.1",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "prisma": "^6.6.0",
     "tailwindcss": "^4.0.15",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.27.0"
+    "typescript-eslint": "^8.27.0",
+    "vitest": "^4.0.15"
   },
   "ct3aMetadata": {
     "initVersion": "7.40.0"
