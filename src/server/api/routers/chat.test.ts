@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { appRouter } from "~/server/api/root";
 import { createInnerTRPCContext } from "~/server/api/trpc";
@@ -77,7 +77,7 @@ describe("Chat Router", () => {
 
     describe("create", () => {
         it("allows guest to create a chat (userId: null)", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: null } });
+            const ctx = createInnerTRPCContext({ auth: { userId: null } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 
@@ -93,7 +93,7 @@ describe("Chat Router", () => {
 
     describe("getChatsByIds", () => {
         it("returns guest chats for provided IDs", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: null } });
+            const ctx = createInnerTRPCContext({ auth: { userId: null } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 
@@ -115,7 +115,7 @@ describe("Chat Router", () => {
     describe("sendMessage", () => {
         it("allows guest to send message with free model (gpt-3.5-turbo)", async () => {
             // Setup context
-            const ctx = createInnerTRPCContext({ auth: { userId: null } });
+            const ctx = createInnerTRPCContext({ auth: { userId: null } as any });
             // Inject mock db
             ctx.db = mockDb;
 
@@ -138,7 +138,7 @@ describe("Chat Router", () => {
         });
 
         it("allows guest to send message with free model (gemini-1.5-flash)", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: null } });
+            const ctx = createInnerTRPCContext({ auth: { userId: null } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 
@@ -156,7 +156,7 @@ describe("Chat Router", () => {
         });
 
         it("blocks guest from using premium model (chatgpt-5.1)", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: null } });
+            const ctx = createInnerTRPCContext({ auth: { userId: null } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 
@@ -169,7 +169,7 @@ describe("Chat Router", () => {
         });
 
         it("allows signed-in user to use premium model", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: "user_123" } });
+            const ctx = createInnerTRPCContext({ auth: { userId: "user_123" } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 
@@ -187,7 +187,7 @@ describe("Chat Router", () => {
         });
 
         it("generates correct prompt for Malay (Arabic) language", async () => {
-            const ctx = createInnerTRPCContext({ auth: { userId: "user_123" } });
+            const ctx = createInnerTRPCContext({ auth: { userId: "user_123" } as any });
             ctx.db = mockDb;
             const caller = appRouter.createCaller(ctx);
 

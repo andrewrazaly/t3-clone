@@ -86,6 +86,7 @@ export const chatRouter = createTRPCRouter({
             const FREE_MODELS = ["gpt-3.5-turbo", "gemini-1.5-flash"];
 
             let model = input.model;
+            // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
             if (!model) {
                 model = ctx.auth.userId ? "chatgpt-5.1" : "gpt-3.5-turbo";
             }
