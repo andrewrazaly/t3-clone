@@ -4,6 +4,7 @@
 import * as React from "react";
 import { Sidebar, SidebarToggle } from "./sidebar";
 
+//make an interface that looks modern saas
 interface ChatLayoutProps {
     children: React.ReactNode;
     selectedChatId: string | null;

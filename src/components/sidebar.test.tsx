@@ -10,10 +10,16 @@ const mocks = vi.hoisted(() => ({
 // Mock the hooks and components
 vi.mock('~/trpc/react', () => ({
     api: {
-        useUtils: () => ({ chat: { getAll: { invalidate: vi.fn() } } }),
+        useUtils: () => ({
+            chat: {
+                getAll: { invalidate: vi.fn() },
+                getChatsByIds: { invalidate: vi.fn() }
+            }
+        }),
         chat: {
             getAll: { useQuery: () => ({ data: [] }) },
             create: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
+            getChatsByIds: { useQuery: () => ({ data: [] }) },
         },
     },
 }));

@@ -18,13 +18,52 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
     const { isSignedIn } = useAuth();
     const { user } = useUser();
     const utils = api.useUtils();
-    const { data: chats } = api.chat.getAll.useQuery(undefined, {
+
+    // State for guest chat IDs stored in localStorage
+    const [guestChatIds, setGuestChatIds] = React.useState<string[]>([]);
+
+    // Load guest chat IDs on mount
+    React.useEffect(() => {
+        if (!isSignedIn) {
+            const stored = localStorage.getItem("guest_chat_ids");
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        // Filter out non-string items to prevent Zod errors
+                        const validIds = parsed.filter((id): id is string => typeof id === "string");
+                        setGuestChatIds(validIds);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse guest chat IDs", e);
+                }
+            }
+        }
+    }, [isSignedIn]);
+
+    // Fetch authenticated user chats
+    const { data: userChats } = api.chat.getAll.useQuery(undefined, {
         enabled: !!isSignedIn,
     });
+
+    // Fetch guest chats based on IDs from localStorage
+    const { data: guestChats } = api.chat.getChatsByIds.useQuery(
+        { chatIds: guestChatIds },
+        { enabled: !isSignedIn && guestChatIds.length > 0 }
+    );
+
+    const chats = isSignedIn ? userChats : guestChats;
+
     const createChat = api.chat.create.useMutation({
         onSuccess: async (newChat) => {
             if (isSignedIn) {
                 await utils.chat.getAll.invalidate();
+            } else {
+                // Save new guest chat ID
+                const updatedIds = [newChat.id, ...guestChatIds];
+                setGuestChatIds(updatedIds);
+                localStorage.setItem("guest_chat_ids", JSON.stringify(updatedIds));
+                await utils.chat.getChatsByIds.invalidate();
             }
             onSelectChat(newChat.id);
         },
@@ -56,8 +95,8 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
                     <div className="text-xs font-medium text-[var(--sidebar-foreground)]/50 px-3 py-2">
                         History
                     </div>
-                    {isSignedIn ? (
-                        chats?.map((chat) => (
+                    {chats && chats.length > 0 ? (
+                        chats.map((chat) => (
                             <button
                                 key={chat.id}
                                 onClick={() => onSelectChat(chat.id)}
@@ -72,7 +111,7 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
                         ))
                     ) : (
                         <div className="px-3 py-2 text-sm text-[var(--muted-foreground)]">
-                            Sign in to save history
+                            {isSignedIn ? "No history yet" : "No unsaved history"}
                         </div>
                     )}
                 </div>

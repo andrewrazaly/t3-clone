@@ -8,13 +8,11 @@ import { TRPCError } from "@trpc/server";
 
 export const chatRouter = createTRPCRouter({
     create: publicProcedure.mutation(async ({ ctx }) => {
-        if (!ctx.auth.userId) {
-            throw new TRPCError({ code: "UNAUTHORIZED" });
-        }
+        // Allow guest to create chat (userId will be null)
         return ctx.db.chat.create({
             data: {
                 title: "New Chat",
-                userId: ctx.auth.userId,
+                userId: ctx.auth.userId ?? null,
             },
         });
     }),
@@ -32,6 +30,22 @@ export const chatRouter = createTRPCRouter({
             },
         });
     }),
+
+    getChatsByIds: publicProcedure
+        .input(z.object({ chatIds: z.array(z.string()) }))
+        .query(async ({ ctx, input }) => {
+            if (input.chatIds.length === 0) return [];
+
+            return ctx.db.chat.findMany({
+                where: {
+                    id: { in: input.chatIds },
+                    userId: null, // Only return guest chats to prevent accessing user chats
+                },
+                orderBy: {
+                    updatedAt: "desc",
+                },
+            });
+        }),
 
     getMessages: publicProcedure
         .input(z.object({ chatId: z.string() }))
@@ -118,8 +132,15 @@ export const chatRouter = createTRPCRouter({
 
             let aiContent = "";
 
+            // Format language string (replace hyphens with spaces, capitalize)
+            let languageName = input.language ? input.language.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) : "";
+
+            if (input.language === "malay-arabic") {
+                languageName = "Malay (Jawi script)";
+            }
+
             const languageInstruction = input.language && input.language !== "english"
-                ? `Please respond in ${input.language}. `
+                ? `Please respond in ${languageName}. `
                 : "";
 
             try {

@@ -6,8 +6,9 @@ import { cn } from "~/lib/utils";
 
 export const LANGUAGES = [
     { id: "english", name: "English" },
-    { id: "bahasa", name: "Bahasa" },
-    { id: "arabic", name: "Arabic" },
+    { id: "bahasa-indonesia", name: "Bahasa Indonesia" },
+    { id: "bahasa-melayu", name: "Bahasa Melayu" },
+    { id: "malay-arabic", name: "Malay (Jawi)" },
 ] as const;
 
 export type Language = (typeof LANGUAGES)[number];
