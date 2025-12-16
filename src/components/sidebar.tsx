@@ -4,7 +4,7 @@ import * as React from "react";
 import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import { useAuth, useUser, SignOutButton, UserButton } from "@clerk/nextjs";
+import { useAuth, useUser, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -28,7 +28,7 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
             const stored = localStorage.getItem("guest_chat_ids");
             if (stored) {
                 try {
-                    const parsed = JSON.parse(stored);
+                    const parsed: unknown = JSON.parse(stored);
                     if (Array.isArray(parsed)) {
                         // Filter out non-string items to prevent Zod errors
                         const validIds = parsed.filter((id): id is string => typeof id === "string");

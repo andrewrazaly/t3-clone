@@ -1,6 +1,6 @@
-
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function */
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { Sidebar } from "./sidebar";
 import { ModelSelector } from "./model-selector";
 import { LanguageSelector } from "./language-selector";
