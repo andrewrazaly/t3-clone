@@ -13,7 +13,7 @@ export default function HomePage() {
     const [selectedChatId, setSelectedChatId] = React.useState<string | null>(null);
     const [selectedModelId, setSelectedModelId] = React.useState<string>(MODELS[0]!.id);
     const [selectedLanguage, setSelectedLanguage] = React.useState<typeof LANGUAGES[number]>(
-        LANGUAGES.find((l) => l.id === "bahasa-melayu") ?? LANGUAGES[0]!
+        LANGUAGES.find((l) => l.id === "bahasa-melayu") ?? LANGUAGES[0]
     );
 
     const isAuthenticated = !!isSignedIn;

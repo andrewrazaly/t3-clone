@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-empty-function */
-import { render, screen, fireEvent } from "@testing-library/react";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-empty-function, @typescript-eslint/no-unsafe-call */
+import { render, screen, cleanup } from "@testing-library/react";
 import { Sidebar } from './sidebar';
 
 const mocks = vi.hoisted(() => ({
