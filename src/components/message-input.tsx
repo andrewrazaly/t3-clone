@@ -13,15 +13,19 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, 
     const utils = api.useUtils();
 
     const sendMessage = api.chat.sendMessage.useMutation({
-        onSuccess: async (data) => {
-            if (selectedChatId) {
-                await utils.chat.getMessages.invalidate({ chatId: selectedChatId });
+        onSuccess: async (data, variables) => {
+            if (variables.chatId) {
+                await utils.chat.getMessages.invalidate({ chatId: variables.chatId });
             }
             await utils.chat.getAll.invalidate();
 
             if (data.newChatId && onChatStarted) {
                 onChatStarted(data.newChatId);
             }
+        },
+        onError: (error) => {
+            console.error("Failed to send message:", error);
+            alert(`Failed to send message: ${error.message}`);
         },
     });
 
