@@ -25,7 +25,7 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, 
         },
         onError: (error) => {
             console.error("Failed to send message:", error);
-            alert(`Failed to send message: ${error.message}`);
+            // Removed user-facing alert as requested
         },
     });
 
