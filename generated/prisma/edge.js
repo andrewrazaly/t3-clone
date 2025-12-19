@@ -87,6 +87,9 @@ Prisma.NullTypes = {
  * Enums
  */
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  ReadUncommitted: 'ReadUncommitted',
+  ReadCommitted: 'ReadCommitted',
+  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -117,6 +120,11 @@ exports.Prisma.MessageScalarFieldEnum = {
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {
@@ -168,7 +176,7 @@ const config = {
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "sqlite",
+  "activeProvider": "postgresql",
   "postinstall": false,
   "inlineDatasources": {
     "db": {
@@ -178,8 +186,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below\n  // Further reading:\n  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema\n  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  createdById String\n\n  @@index([name])\n}\n\nmodel Chat {\n  id        String    @id @default(cuid())\n  title     String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  userId    String?\n  messages  Message[]\n}\n\nmodel Message {\n  id        String   @id @default(cuid())\n  content   String\n  role      String\n  createdAt DateTime @default(now())\n  chatId    String\n  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)\n}\n",
-  "inlineSchemaHash": "0da9f639eee0e37a8e68ed8b7d627564e985ef8b3d9b8fa36f36972cd6c8503e",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  createdById String\n\n  @@index([name])\n}\n\nmodel Chat {\n  id        String    @id @default(cuid())\n  title     String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  userId    String?\n  messages  Message[]\n}\n\nmodel Message {\n  id        String   @id @default(cuid())\n  content   String\n  role      String\n  createdAt DateTime @default(now())\n  chatId    String\n  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)\n}\n",
+  "inlineSchemaHash": "e8d7ff786ec461070c94c3ad23f7426cc599187343e1beddb01d939e3f8f540a",
   "copyEngine": true
 }
 config.dirname = '/'
