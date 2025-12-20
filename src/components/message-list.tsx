@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { cn } from "~/lib/utils";
-import { User, Bot } from "lucide-react";
+import { User, Bot, Loader2 } from "lucide-react";
 import { api } from "~/trpc/react";
 
-export function MessageList({ selectedChatId }: { selectedChatId: string | null }) {
+export function MessageList({ selectedChatId, isSubmitting }: { selectedChatId: string | null; isSubmitting?: boolean }) {
     const { data: messages, isLoading } = api.chat.getMessages.useQuery(
         { chatId: selectedChatId! },
         { enabled: !!selectedChatId }
@@ -67,6 +67,22 @@ export function MessageList({ selectedChatId }: { selectedChatId: string | null 
                     )}
                 </div>
             ))}
+
+            {/* Loading indicator when AI is thinking */}
+            {isSubmitting && (
+                <div className="flex gap-4 max-w-3xl mx-auto justify-start animate-in fade-in duration-300">
+                    <div className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center shrink-0 text-[var(--primary-foreground)]">
+                        <Bot className="h-5 w-5" />
+                    </div>
+                    <div className="rounded-lg px-4 py-2 bg-[var(--accent)] text-[var(--foreground)]">
+                        <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-[var(--muted-foreground)]">Thinking...</span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div ref={bottomRef} />
         </div>
     );

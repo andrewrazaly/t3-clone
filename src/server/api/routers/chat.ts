@@ -84,7 +84,7 @@ export const chatRouter = createTRPCRouter({
         )
         .mutation(async ({ ctx, input }) => {
             try {
-                const FREE_MODELS = ["gpt-3.5-turbo", "gemini-1.5-flash"];
+                const FREE_MODELS = ["gpt-3.5-turbo"]; // Gemini temporarily disabled - see BUGS.md
 
                 let model = input.model;
                 // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
@@ -129,6 +129,8 @@ export const chatRouter = createTRPCRouter({
                         chatId: chatId,
                         content: input.content,
                         role: "user",
+                        model: model,
+                        language: input.language,
                     },
                 });
 
@@ -216,6 +218,8 @@ export const chatRouter = createTRPCRouter({
                         chatId: chatId,
                         content: aiContent,
                         role: "assistant",
+                        model: model,
+                        language: input.language,
                     },
                 });
 

@@ -3186,6 +3186,8 @@ export namespace Prisma {
     id: string | null
     content: string | null
     role: string | null
+    model: string | null
+    language: string | null
     createdAt: Date | null
     chatId: string | null
   }
@@ -3194,6 +3196,8 @@ export namespace Prisma {
     id: string | null
     content: string | null
     role: string | null
+    model: string | null
+    language: string | null
     createdAt: Date | null
     chatId: string | null
   }
@@ -3202,6 +3206,8 @@ export namespace Prisma {
     id: number
     content: number
     role: number
+    model: number
+    language: number
     createdAt: number
     chatId: number
     _all: number
@@ -3212,6 +3218,8 @@ export namespace Prisma {
     id?: true
     content?: true
     role?: true
+    model?: true
+    language?: true
     createdAt?: true
     chatId?: true
   }
@@ -3220,6 +3228,8 @@ export namespace Prisma {
     id?: true
     content?: true
     role?: true
+    model?: true
+    language?: true
     createdAt?: true
     chatId?: true
   }
@@ -3228,6 +3238,8 @@ export namespace Prisma {
     id?: true
     content?: true
     role?: true
+    model?: true
+    language?: true
     createdAt?: true
     chatId?: true
     _all?: true
@@ -3309,6 +3321,8 @@ export namespace Prisma {
     id: string
     content: string
     role: string
+    model: string | null
+    language: string | null
     createdAt: Date
     chatId: string
     _count: MessageCountAggregateOutputType | null
@@ -3334,6 +3348,8 @@ export namespace Prisma {
     id?: boolean
     content?: boolean
     role?: boolean
+    model?: boolean
+    language?: boolean
     createdAt?: boolean
     chatId?: boolean
     chat?: boolean | ChatDefaultArgs<ExtArgs>
@@ -3343,6 +3359,8 @@ export namespace Prisma {
     id?: boolean
     content?: boolean
     role?: boolean
+    model?: boolean
+    language?: boolean
     createdAt?: boolean
     chatId?: boolean
     chat?: boolean | ChatDefaultArgs<ExtArgs>
@@ -3352,6 +3370,8 @@ export namespace Prisma {
     id?: boolean
     content?: boolean
     role?: boolean
+    model?: boolean
+    language?: boolean
     createdAt?: boolean
     chatId?: boolean
     chat?: boolean | ChatDefaultArgs<ExtArgs>
@@ -3361,11 +3381,13 @@ export namespace Prisma {
     id?: boolean
     content?: boolean
     role?: boolean
+    model?: boolean
+    language?: boolean
     createdAt?: boolean
     chatId?: boolean
   }
 
-  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "content" | "role" | "createdAt" | "chatId", ExtArgs["result"]["message"]>
+  export type MessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "content" | "role" | "model" | "language" | "createdAt" | "chatId", ExtArgs["result"]["message"]>
   export type MessageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     chat?: boolean | ChatDefaultArgs<ExtArgs>
   }
@@ -3385,6 +3407,8 @@ export namespace Prisma {
       id: string
       content: string
       role: string
+      model: string | null
+      language: string | null
       createdAt: Date
       chatId: string
     }, ExtArgs["result"]["message"]>
@@ -3814,6 +3838,8 @@ export namespace Prisma {
     readonly id: FieldRef<"Message", 'String'>
     readonly content: FieldRef<"Message", 'String'>
     readonly role: FieldRef<"Message", 'String'>
+    readonly model: FieldRef<"Message", 'String'>
+    readonly language: FieldRef<"Message", 'String'>
     readonly createdAt: FieldRef<"Message", 'DateTime'>
     readonly chatId: FieldRef<"Message", 'String'>
   }
@@ -4270,6 +4296,8 @@ export namespace Prisma {
     id: 'id',
     content: 'content',
     role: 'role',
+    model: 'model',
+    language: 'language',
     createdAt: 'createdAt',
     chatId: 'chatId'
   };
@@ -4481,6 +4509,8 @@ export namespace Prisma {
     id?: StringFilter<"Message"> | string
     content?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
+    model?: StringNullableFilter<"Message"> | string | null
+    language?: StringNullableFilter<"Message"> | string | null
     createdAt?: DateTimeFilter<"Message"> | Date | string
     chatId?: StringFilter<"Message"> | string
     chat?: XOR<ChatScalarRelationFilter, ChatWhereInput>
@@ -4490,6 +4520,8 @@ export namespace Prisma {
     id?: SortOrder
     content?: SortOrder
     role?: SortOrder
+    model?: SortOrderInput | SortOrder
+    language?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     chatId?: SortOrder
     chat?: ChatOrderByWithRelationInput
@@ -4502,6 +4534,8 @@ export namespace Prisma {
     NOT?: MessageWhereInput | MessageWhereInput[]
     content?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
+    model?: StringNullableFilter<"Message"> | string | null
+    language?: StringNullableFilter<"Message"> | string | null
     createdAt?: DateTimeFilter<"Message"> | Date | string
     chatId?: StringFilter<"Message"> | string
     chat?: XOR<ChatScalarRelationFilter, ChatWhereInput>
@@ -4511,6 +4545,8 @@ export namespace Prisma {
     id?: SortOrder
     content?: SortOrder
     role?: SortOrder
+    model?: SortOrderInput | SortOrder
+    language?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     chatId?: SortOrder
     _count?: MessageCountOrderByAggregateInput
@@ -4525,6 +4561,8 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Message"> | string
     content?: StringWithAggregatesFilter<"Message"> | string
     role?: StringWithAggregatesFilter<"Message"> | string
+    model?: StringNullableWithAggregatesFilter<"Message"> | string | null
+    language?: StringNullableWithAggregatesFilter<"Message"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Message"> | Date | string
     chatId?: StringWithAggregatesFilter<"Message"> | string
   }
@@ -4646,6 +4684,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
     chat: ChatCreateNestedOneWithoutMessagesInput
   }
@@ -4654,6 +4694,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
     chatId: string
   }
@@ -4662,6 +4704,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chat?: ChatUpdateOneRequiredWithoutMessagesNestedInput
   }
@@ -4670,6 +4714,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chatId?: StringFieldUpdateOperationsInput | string
   }
@@ -4678,6 +4724,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
     chatId: string
   }
@@ -4686,6 +4734,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -4693,6 +4743,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     chatId?: StringFieldUpdateOperationsInput | string
   }
@@ -4895,6 +4947,8 @@ export namespace Prisma {
     id?: SortOrder
     content?: SortOrder
     role?: SortOrder
+    model?: SortOrder
+    language?: SortOrder
     createdAt?: SortOrder
     chatId?: SortOrder
   }
@@ -4903,6 +4957,8 @@ export namespace Prisma {
     id?: SortOrder
     content?: SortOrder
     role?: SortOrder
+    model?: SortOrder
+    language?: SortOrder
     createdAt?: SortOrder
     chatId?: SortOrder
   }
@@ -4911,6 +4967,8 @@ export namespace Prisma {
     id?: SortOrder
     content?: SortOrder
     role?: SortOrder
+    model?: SortOrder
+    language?: SortOrder
     createdAt?: SortOrder
     chatId?: SortOrder
   }
@@ -5131,6 +5189,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
   }
 
@@ -5138,6 +5198,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
   }
 
@@ -5174,6 +5236,8 @@ export namespace Prisma {
     id?: StringFilter<"Message"> | string
     content?: StringFilter<"Message"> | string
     role?: StringFilter<"Message"> | string
+    model?: StringNullableFilter<"Message"> | string | null
+    language?: StringNullableFilter<"Message"> | string | null
     createdAt?: DateTimeFilter<"Message"> | Date | string
     chatId?: StringFilter<"Message"> | string
   }
@@ -5230,6 +5294,8 @@ export namespace Prisma {
     id?: string
     content: string
     role: string
+    model?: string | null
+    language?: string | null
     createdAt?: Date | string
   }
 
@@ -5237,6 +5303,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -5244,6 +5312,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -5251,6 +5321,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    model?: NullableStringFieldUpdateOperationsInput | string | null
+    language?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

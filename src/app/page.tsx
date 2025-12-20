@@ -13,8 +13,9 @@ export default function HomePage() {
     const [selectedChatId, setSelectedChatId] = React.useState<string | null>(null);
     const [selectedModelId, setSelectedModelId] = React.useState<string>(MODELS[0]!.id);
     const [selectedLanguage, setSelectedLanguage] = React.useState<typeof LANGUAGES[number]>(
-        LANGUAGES.find((l) => l.id === "bahasa-melayu") ?? LANGUAGES[0]
+        LANGUAGES.find((l) => l.id === "bahasa-indonesia") ?? LANGUAGES[0]
     );
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const isAuthenticated = !!isSignedIn;
     const selectedModel = MODELS.find((m) => m.id === selectedModelId) ?? MODELS[0]!;
@@ -42,12 +43,14 @@ export default function HomePage() {
                     <LanguageSelector selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} />
                 </div>
 
-                <MessageList selectedChatId={selectedChatId} />
+                <MessageList selectedChatId={selectedChatId} isSubmitting={isSubmitting} />
                 <MessageInput
                     selectedChatId={selectedChatId}
                     selectedModel={selectedModel}
                     selectedLanguage={selectedLanguage}
                     onChatStarted={setSelectedChatId}
+                    onSubmitStart={() => setIsSubmitting(true)}
+                    onSubmitEnd={() => setIsSubmitting(false)}
                 />
             </div>
         </ChatLayout>

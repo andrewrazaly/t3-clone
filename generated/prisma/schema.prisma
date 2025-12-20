@@ -35,6 +35,8 @@ model Message {
   id        String   @id @default(cuid())
   content   String
   role      String
+  model     String?
+  language  String?
   createdAt DateTime @default(now())
   chatId    String
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)

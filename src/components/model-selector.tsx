@@ -41,20 +41,21 @@ export const MODELS: Model[] = [
         icon: Zap,
         isPremium: false,
     },
-    {
-        id: "gemini-1.5-flash",
-        name: "Gemini Flash",
-        description: "Fastest Google model",
-        icon: Zap,
-        isPremium: false,
-    },
-    {
-        id: "gemini-1.5-pro",
-        name: "Gemini Pro",
-        description: "Capable Google model",
-        icon: Sparkles,
-        isPremium: true,
-    },
+    // Gemini models temporarily disabled - see BUGS.md
+    // {
+    //     id: "gemini-1.5-flash",
+    //     name: "Gemini Flash",
+    //     description: "Fastest Google model",
+    //     icon: Zap,
+    //     isPremium: false,
+    // },
+    // {
+    //     id: "gemini-1.5-pro",
+    //     name: "Gemini Pro",
+    //     description: "Capable Google model",
+    //     icon: Sparkles,
+    //     isPremium: true,
+    // },
 ];
 
 interface ModelSelectorProps {

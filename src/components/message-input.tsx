@@ -7,7 +7,7 @@ import { api } from "~/trpc/react";
 import { type Model } from "./model-selector";
 import { type Language } from "./language-selector";
 
-export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, onChatStarted }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language; onChatStarted?: (chatId: string) => void }) {
+export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, onChatStarted, onSubmitStart, onSubmitEnd }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language; onChatStarted?: (chatId: string) => void; onSubmitStart?: () => void; onSubmitEnd?: () => void }) {
     const [input, setInput] = React.useState("");
     const [isSearchEnabled, setIsSearchEnabled] = React.useState(false);
     const utils = api.useUtils();
@@ -22,16 +22,19 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, 
             if (data.newChatId && onChatStarted) {
                 onChatStarted(data.newChatId);
             }
+
+            onSubmitEnd?.();
         },
         onError: (error) => {
             console.error("Failed to send message:", error);
-            // Removed user-facing alert as requested
+            onSubmitEnd?.();
         },
     });
 
     const handleSend = () => {
         if (!input.trim()) return;
 
+        onSubmitStart?.();
         sendMessage.mutate({
             chatId: selectedChatId ?? undefined,
             content: input,
