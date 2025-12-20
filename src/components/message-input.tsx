@@ -99,8 +99,9 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, 
                     </button>
                 </div>
             </div>
-            <div className="text-center text-xs text-[var(--muted-foreground)] mt-2">
-                ChatGPT can make mistakes. Check important info.
+            <div className="text-center text-xs text-[var(--muted-foreground)] mt-2 space-y-1">
+                <div>ChatGPT can make mistakes. Check important info.</div>
+                <div className="text-[10px] opacity-70">v1.0.0</div>
             </div>
         </div>
     );
