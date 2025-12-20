@@ -25,7 +25,7 @@ interface UseStreamMessageReturn {
 }
 
 export function useStreamMessage(
-  onComplete?: (data: { newChatId?: string }) => void
+  onComplete?: (data: { newChatId?: string }) => void | Promise<void>
 ): UseStreamMessageReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -47,8 +47,8 @@ export function useStreamMessage(
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to send message");
+          const errorData = await response.json() as { error?: string };
+          throw new Error(errorData.error ?? "Failed to send message");
         }
 
         const reader = response.body?.getReader();
@@ -67,7 +67,7 @@ export function useStreamMessage(
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          buffer = lines.pop() ?? "";
 
           for (const line of lines) {
             if (line.startsWith("data: ")) {
@@ -82,7 +82,7 @@ export function useStreamMessage(
                 setStreamingContent((prev) => prev + data.token);
               } else if (data.done) {
                 setIsStreaming(false);
-                onComplete?.({ newChatId: data.newChatId });
+                await onComplete?.({ newChatId: data.newChatId });
               }
             }
           }
