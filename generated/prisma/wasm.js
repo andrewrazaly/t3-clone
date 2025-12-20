@@ -151,7 +151,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/andrewthorpe/Desktop/Antigravity/t3-clone/generated/prisma",
+      "value": "/Users/andrewthorpe/Desktop/andyrazaly/v1.1.1/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -160,17 +160,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "darwin",
+        "value": "darwin-arm64",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/andrewthorpe/Desktop/Antigravity/t3-clone/prisma/schema.prisma",
+    "sourceFilePath": "/Users/andrewthorpe/Desktop/andyrazaly/v1.1.1/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../prisma",
   "clientVersion": "6.19.0",
@@ -188,8 +187,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  createdById String\n\n  @@index([name])\n}\n\nmodel Chat {\n  id        String    @id @default(cuid())\n  title     String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  userId    String?\n  messages  Message[]\n}\n\nmodel Message {\n  id        String   @id @default(cuid())\n  content   String\n  role      String\n  model     String?\n  language  String?\n  createdAt DateTime @default(now())\n  chatId    String\n  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)\n}\n",
-  "inlineSchemaHash": "4bb7bf88c6b88d7ce1d11e415507ea7c63afe762330de8f78f6cf8e5a2a898b8",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  createdById String\n\n  @@index([name])\n}\n\nmodel Chat {\n  id        String    @id @default(cuid())\n  title     String\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  userId    String?\n  messages  Message[]\n}\n\nmodel Message {\n  id        String   @id @default(cuid())\n  content   String\n  role      String\n  model     String?\n  language  String?\n  createdAt DateTime @default(now())\n  chatId    String\n  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)\n\n  @@index([chatId])\n}\n",
+  "inlineSchemaHash": "eac14366b7128536599170621825cd2efdc5f68111dddb7e42cb8e6c0054529b",
   "copyEngine": true
 }
 config.dirname = '/'

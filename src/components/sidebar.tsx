@@ -77,7 +77,10 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
         <div
             className={cn(
                 "flex flex-col h-full bg-[var(--sidebar-background)] text-[var(--sidebar-foreground)] transition-all duration-300 ease-in-out border-r border-[var(--sidebar-border)]",
-                isOpen ? "w-[260px]" : "w-0 opacity-0 overflow-hidden",
+                // Mobile: fixed overlay, Desktop: normal sidebar
+                "md:relative fixed inset-y-0 left-0 z-40",
+                isOpen ? "w-[260px]" : "w-0 md:w-0 -translate-x-full md:translate-x-0 opacity-0 overflow-hidden",
+                isOpen && "translate-x-0 opacity-100",
                 className
             )}
         >
@@ -140,7 +143,8 @@ export function SidebarToggle({ isOpen, toggle }: { isOpen: boolean; toggle: () 
     return (
         <button
             onClick={toggle}
-            className="fixed top-2 left-2 z-50 p-2 rounded-md hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors md:hidden"
+            className="fixed top-3 left-3 z-50 p-2 rounded-md bg-[var(--background)] border border-[var(--border)] hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors shadow-sm md:top-2 md:left-2 md:bg-transparent md:border-0 md:shadow-none"
+            aria-label={isOpen ? "Close sidebar" : "Open sidebar"}
         >
             {isOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
         </button>

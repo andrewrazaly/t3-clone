@@ -100,27 +100,28 @@ export const chatRouter = createTRPCRouter({
                 }
 
                 let chatId = input.chatId;
+                let chat;
 
                 if (!chatId) {
-                    const newChat = await ctx.db.chat.create({
+                    chat = await ctx.db.chat.create({
                         data: {
                             title: input.content.slice(0, 30) || "New Chat",
                             userId: ctx.auth.userId,
                         },
                     });
-                    chatId = newChat.id;
-                }
+                    chatId = chat.id;
+                } else {
+                    chat = await ctx.db.chat.findUnique({
+                        where: { id: chatId },
+                    });
 
-                const chat = await ctx.db.chat.findUnique({
-                    where: { id: chatId },
-                });
+                    if (!chat) {
+                        throw new TRPCError({ code: "NOT_FOUND" });
+                    }
 
-                if (!chat) {
-                    throw new TRPCError({ code: "NOT_FOUND" });
-                }
-
-                if (chat.userId && chat.userId !== ctx.auth.userId) {
-                    throw new TRPCError({ code: "UNAUTHORIZED" });
+                    if (chat.userId && chat.userId !== ctx.auth.userId) {
+                        throw new TRPCError({ code: "UNAUTHORIZED" });
+                    }
                 }
 
                 // Save user message

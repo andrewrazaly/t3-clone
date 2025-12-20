@@ -15,10 +15,16 @@ export default function HomePage() {
     const [selectedLanguage, setSelectedLanguage] = React.useState<typeof LANGUAGES[number]>(
         LANGUAGES.find((l) => l.id === "bahasa-indonesia") ?? LANGUAGES[0]
     );
-    const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [streamingContent, setStreamingContent] = React.useState("");
+    const [isStreaming, setIsStreaming] = React.useState(false);
 
     const isAuthenticated = !!isSignedIn;
     const selectedModel = MODELS.find((m) => m.id === selectedModelId) ?? MODELS[0]!;
+
+    const handleStreamingContent = React.useCallback((content: string, streaming: boolean) => {
+        setStreamingContent(content);
+        setIsStreaming(streaming);
+    }, []);
 
     // Reset to free model if user signs out and a premium model was selected
     React.useEffect(() => {
@@ -34,7 +40,7 @@ export default function HomePage() {
         <ChatLayout selectedChatId={selectedChatId} onSelectChat={setSelectedChatId}>
             <div className="flex flex-col h-full">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+                <div className="flex items-center justify-between p-3 md:p-4 border-b border-[var(--border)] ml-12 md:ml-0">
                     <ModelSelector
                         selectedModelId={selectedModelId}
                         onSelectModel={setSelectedModelId}
@@ -43,14 +49,17 @@ export default function HomePage() {
                     <LanguageSelector selectedLanguage={selectedLanguage} onSelectLanguage={setSelectedLanguage} />
                 </div>
 
-                <MessageList selectedChatId={selectedChatId} isSubmitting={isSubmitting} />
+                <MessageList
+                    selectedChatId={selectedChatId}
+                    streamingContent={streamingContent}
+                    isStreaming={isStreaming}
+                />
                 <MessageInput
                     selectedChatId={selectedChatId}
                     selectedModel={selectedModel}
                     selectedLanguage={selectedLanguage}
                     onChatStarted={setSelectedChatId}
-                    onSubmitStart={() => setIsSubmitting(true)}
-                    onSubmitEnd={() => setIsSubmitting(false)}
+                    onStreamingContent={handleStreamingContent}
                 />
             </div>
         </ChatLayout>

@@ -86,14 +86,14 @@ export function ModelSelector({ selectedModelId, onSelectModel, isAuthenticated 
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg hover:bg-[var(--accent)] transition-colors text-[var(--foreground)]"
+                className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 text-xs md:text-sm font-medium rounded-lg hover:bg-[var(--accent)] transition-colors text-[var(--foreground)]"
             >
-                {selectedModel?.name}
+                <span className="truncate max-w-[120px] md:max-w-none">{selectedModel?.name}</span>
                 <span className="text-[var(--muted-foreground)] text-xs">▼</span>
             </button>
 
             {isOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 p-1 bg-[var(--popover)] border border-[var(--border)] rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute top-full left-0 mt-2 w-64 md:w-72 p-1 bg-[var(--popover)] border border-[var(--border)] rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
                     <div className="space-y-1">
                         <div className="px-2 py-1.5 text-xs font-semibold text-[var(--muted-foreground)]">
                             Select Model

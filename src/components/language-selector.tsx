@@ -37,14 +37,14 @@ export function LanguageSelector({ selectedLanguage, onSelectLanguage }: Languag
         <div className="relative" ref={containerRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors"
+                className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-md hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] transition-colors"
             >
-                <Globe className="h-4 w-4" />
+                <Globe className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 <span>{selectedLanguage.name}</span>
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--popover)] border border-[var(--border)] rounded-md shadow-md z-50 py-1">
+                <div className="absolute right-0 top-full mt-2 w-44 md:w-48 bg-[var(--popover)] border border-[var(--border)] rounded-md shadow-md z-50 py-1">
                     {LANGUAGES.map((language) => (
                         <button
                             key={language.id}
