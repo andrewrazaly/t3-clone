@@ -17,6 +17,124 @@ export const chatRouter = createTRPCRouter({
         });
     }),
 
+    updateTitle: publicProcedure
+        .input(z.object({
+            chatId: z.string(),
+            title: z.string().min(1).max(100),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const chat = await ctx.db.chat.findUnique({
+                where: { id: input.chatId },
+            });
+
+            if (!chat) {
+                throw new TRPCError({ code: "NOT_FOUND" });
+            }
+
+            // If chat has a user, ensure it matches the session user
+            if (chat.userId && chat.userId !== ctx.auth.userId) {
+                throw new TRPCError({ code: "UNAUTHORIZED" });
+            }
+
+            return ctx.db.chat.update({
+                where: { id: input.chatId },
+                data: { title: input.title },
+            });
+        }),
+
+    generateTitle: publicProcedure
+        .input(z.object({
+            chatId: z.string(),
+            model: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            // Verify chat ownership
+            const chat = await ctx.db.chat.findUnique({
+                where: { id: input.chatId },
+            });
+
+            if (!chat) {
+                throw new TRPCError({ code: "NOT_FOUND" });
+            }
+
+            if (chat.userId && chat.userId !== ctx.auth.userId) {
+                throw new TRPCError({ code: "UNAUTHORIZED" });
+            }
+
+            // Fetch first 4 messages for context
+            const messages = await ctx.db.message.findMany({
+                where: { chatId: input.chatId },
+                orderBy: { createdAt: "asc" },
+                take: 4,
+            });
+
+            if (messages.length === 0) {
+                throw new TRPCError({ code: "BAD_REQUEST", message: "No messages found" });
+            }
+
+            // Build conversation context
+            const conversationContext = messages
+                .map((m) => `${m.role}: ${m.content}`)
+                .join("\n");
+
+            const titlePrompt = `Based on this conversation, generate a concise 3-5 word title that summarizes the topic. Only return the title, nothing else.\n\n${conversationContext}`;
+
+            let generatedTitle = "";
+
+            try {
+                if (input.model.startsWith("claude")) {
+                    if (!env.ANTHROPIC_API_KEY) throw new Error("Anthropic API Key not found");
+                    const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+                    const message = await anthropic.messages.create({
+                        model: input.model,
+                        max_tokens: 50,
+                        messages: [{ role: "user", content: titlePrompt }],
+                    });
+                    generatedTitle = message.content[0]?.type === "text"
+                        ? message.content[0].text.trim()
+                        : "New Chat";
+                } else if (input.model.startsWith("gpt") || input.model === "chatgpt-5.1") {
+                    if (!env.OPENAI_API_KEY) throw new Error("OpenAI API Key not found");
+                    const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+                    const apiModel = input.model === "chatgpt-5.1" ? "gpt-4o" : input.model;
+                    const completion = await openai.chat.completions.create({
+                        model: apiModel,
+                        messages: [{ role: "user", content: titlePrompt }],
+                        max_tokens: 50,
+                    });
+                    generatedTitle = completion.choices[0]?.message?.content?.trim() ?? "New Chat";
+                } else if (input.model.startsWith("gemini")) {
+                    if (!env.GOOGLE_API_KEY) throw new Error("Google API Key not found");
+                    const genAI = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
+                    const geminiModel = genAI.getGenerativeModel({ model: input.model });
+                    const result = await geminiModel.generateContent(titlePrompt);
+                    generatedTitle = result.response.text().trim();
+                } else {
+                    throw new Error(`Unsupported model: ${input.model}`);
+                }
+
+                // Sanitize and limit title length
+                generatedTitle = generatedTitle
+                    .replace(/^["']|["']$/g, "") // Remove quotes
+                    .slice(0, 100); // Max 100 chars
+
+                if (!generatedTitle || generatedTitle.length === 0) {
+                    generatedTitle = "New Chat";
+                }
+            } catch (error) {
+                console.error("Title generation error:", error);
+                generatedTitle = messages[0]?.content.slice(0, 30) ?? "New Chat";
+            }
+
+            // Update chat title
+            const updatedChat = await ctx.db.chat.update({
+                where: { id: input.chatId },
+                data: { title: generatedTitle },
+            });
+
+            return { title: updatedChat.title };
+        }),
+
     getAll: publicProcedure.query(async ({ ctx }) => {
         if (!ctx.auth.userId) {
             return [];
@@ -223,6 +341,24 @@ export const chatRouter = createTRPCRouter({
                         language: input.language,
                     },
                 });
+
+                // Generate title if this is the first AI response
+                const messageCount = await ctx.db.message.count({
+                    where: { chatId: chatId },
+                });
+
+                if (messageCount === 2) {
+                    // Run asynchronously to not block the response
+                    void (async () => {
+                        try {
+                            const { createCaller } = await import("~/server/api/root");
+                            const caller = createCaller({ auth: ctx.auth, db: ctx.db });
+                            await caller.chat.generateTitle({ chatId, model });
+                        } catch (error) {
+                            console.error("Background title generation failed:", error);
+                        }
+                    })();
+                }
 
                 return { userMessage, aiMessage, newChatId: !input.chatId ? chatId : undefined };
             } catch (error) {

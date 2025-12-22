@@ -210,6 +210,27 @@ export default async function handler(
         },
       });
 
+      // Generate title if this is the first AI response
+      const messageCount = await db.message.count({
+        where: { chatId: finalChatId },
+      });
+
+      if (messageCount === 2) {
+        // Run asynchronously to not block the response
+        void (async () => {
+          try {
+            const { createCaller } = await import("~/server/api/root");
+            const caller = createCaller({ auth, db });
+            await caller.chat.generateTitle({
+              chatId: finalChatId,
+              model: model,
+            });
+          } catch (error) {
+            console.error("Background title generation failed:", error);
+          }
+        })();
+      }
+
       // Send completion event
       res.write(
         `data: ${JSON.stringify({

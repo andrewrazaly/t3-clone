@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen, Pencil } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { useAuth, useUser, UserButton } from "@clerk/nextjs";
@@ -21,6 +21,11 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
 
     // State for guest chat IDs stored in localStorage
     const [guestChatIds, setGuestChatIds] = React.useState<string[]>([]);
+
+    // State for editing titles
+    const [editingChatId, setEditingChatId] = React.useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = React.useState("");
+    const editInputRef = React.useRef<HTMLInputElement>(null);
 
     // Load guest chat IDs on mount
     React.useEffect(() => {
@@ -69,9 +74,51 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
         },
     });
 
+    const updateTitle = api.chat.updateTitle.useMutation({
+        onSuccess: async () => {
+            if (isSignedIn) {
+                await utils.chat.getAll.invalidate();
+            } else {
+                await utils.chat.getChatsByIds.invalidate();
+            }
+            setEditingChatId(null);
+        },
+        onError: (error) => {
+            console.error("Failed to update title:", error);
+            setEditingChatId(null);
+        },
+    });
+
     const handleNewChat = () => {
         createChat.mutate();
     };
+
+    const handleStartEdit = (chatId: string, currentTitle: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingChatId(chatId);
+        setEditingTitle(currentTitle);
+    };
+
+    const handleSaveEdit = (chatId: string) => {
+        if (!editingTitle.trim()) {
+            setEditingChatId(null);
+            return;
+        }
+        updateTitle.mutate({ chatId, title: editingTitle.trim() });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingChatId(null);
+        setEditingTitle("");
+    };
+
+    // Focus input when editing starts
+    React.useEffect(() => {
+        if (editingChatId && editInputRef.current) {
+            editInputRef.current.focus();
+            editInputRef.current.select();
+        }
+    }, [editingChatId]);
 
     return (
         <div
@@ -100,17 +147,49 @@ export function Sidebar({ className, isOpen, selectedChatId, onSelectChat }: Sid
                     </div>
                     {chats && chats.length > 0 ? (
                         chats.map((chat) => (
-                            <button
+                            <div
                                 key={chat.id}
-                                onClick={() => onSelectChat(chat.id)}
                                 className={cn(
-                                    "flex items-center gap-3 px-3 py-3 text-sm rounded-md hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)] transition-colors text-left truncate",
+                                    "flex items-center gap-3 px-3 py-3 text-sm rounded-md hover:bg-[var(--sidebar-accent)] transition-colors group",
                                     selectedChatId === chat.id && "bg-[var(--sidebar-accent)] text-[var(--sidebar-accent-foreground)]"
                                 )}
                             >
                                 <MessageSquare className="h-4 w-4 shrink-0" />
-                                <span className="truncate">{chat.title}</span>
-                            </button>
+                                {editingChatId === chat.id ? (
+                                    <input
+                                        ref={editInputRef}
+                                        type="text"
+                                        value={editingTitle}
+                                        onChange={(e) => setEditingTitle(e.target.value)}
+                                        onBlur={() => handleSaveEdit(chat.id)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleSaveEdit(chat.id);
+                                            } else if (e.key === "Escape") {
+                                                handleCancelEdit();
+                                            }
+                                        }}
+                                        className="flex-1 bg-[var(--sidebar-background)] border border-[var(--sidebar-border)] rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => onSelectChat(chat.id)}
+                                            className="flex-1 text-left truncate"
+                                        >
+                                            <span className="truncate">{chat.title}</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleStartEdit(chat.id, chat.title, e)}
+                                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--sidebar-accent)] rounded transition-opacity"
+                                            title="Edit title"
+                                        >
+                                            <Pencil className="h-3 w-3" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         ))
                     ) : (
                         <div className="px-3 py-2 text-sm text-[var(--muted-foreground)]">
