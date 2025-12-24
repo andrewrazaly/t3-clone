@@ -17,6 +17,11 @@ interface StreamResponse {
   newChatId?: string;
 }
 
+interface StreamCallbacks {
+  onConnected?: (data: { newChatId?: string }) => void | Promise<void>;
+  onComplete?: (data: { newChatId?: string }) => void | Promise<void>;
+}
+
 interface UseStreamMessageReturn {
   sendMessage: (params: StreamMessageParams) => Promise<void>;
   isStreaming: boolean;
@@ -25,7 +30,7 @@ interface UseStreamMessageReturn {
 }
 
 export function useStreamMessage(
-  onComplete?: (data: { newChatId?: string }) => void | Promise<void>
+  callbacks?: StreamCallbacks
 ): UseStreamMessageReturn {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -36,8 +41,27 @@ export function useStreamMessage(
       setIsStreaming(true);
       setStreamingContent("");
       setError(null);
+      let streamedLength = 0;
+
+      // #region agent log
+      fetch("http://127.0.0.1:7243/ingest/b2731f27-0823-4a25-97fe-e90cef5a35e7", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: "debug-session",
+          runId: "pre-fix",
+          hypothesisId: "H1",
+          location: "use-stream-message.ts:sendMessage",
+          message: "sendMessage start",
+          data: { chatId: params.chatId ?? null, model: params.model },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
 
       try {
+        const { onConnected, onComplete } = callbacks ?? {};
+
         const response = await fetch("/api/chat/stream", {
           method: "POST",
           headers: {
@@ -75,13 +99,60 @@ export function useStreamMessage(
 
               if (data.connected) {
                 // Stream connection established, continue waiting for tokens
+                // #region agent log
+                fetch("http://127.0.0.1:7243/ingest/b2731f27-0823-4a25-97fe-e90cef5a35e7", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    sessionId: "debug-session",
+                    runId: "pre-fix",
+                    hypothesisId: "H1",
+                    location: "use-stream-message.ts:connected",
+                    message: "stream connected",
+                    data: { newChatId: data.newChatId ?? null },
+                    timestamp: Date.now(),
+                  }),
+                }).catch(() => {});
+                // #endregion
+                await onConnected?.({ newChatId: data.newChatId });
                 continue;
               } else if (data.error) {
                 setError(data.error);
               } else if (data.token) {
-                setStreamingContent((prev) => prev + data.token);
+                setStreamingContent((prev: string) => prev + data.token);
+                streamedLength += data.token.length;
+                // #region agent log
+                fetch("http://127.0.0.1:7243/ingest/b2731f27-0823-4a25-97fe-e90cef5a35e7", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    sessionId: "debug-session",
+                    runId: "pre-fix",
+                    hypothesisId: "H2",
+                    location: "use-stream-message.ts:token",
+                    message: "token received",
+                    data: { chunkLen: data.token.length, streamedLength },
+                    timestamp: Date.now(),
+                  }),
+                }).catch(() => {});
+                // #endregion
               } else if (data.done) {
                 setIsStreaming(false);
+                // #region agent log
+                fetch("http://127.0.0.1:7243/ingest/b2731f27-0823-4a25-97fe-e90cef5a35e7", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    sessionId: "debug-session",
+                    runId: "pre-fix",
+                    hypothesisId: "H1",
+                    location: "use-stream-message.ts:done",
+                    message: "stream done",
+                    data: { newChatId: data.newChatId ?? null, streamedLength },
+                    timestamp: Date.now(),
+                  }),
+                }).catch(() => {});
+                // #endregion
                 await onComplete?.({ newChatId: data.newChatId });
               }
             }
@@ -93,7 +164,7 @@ export function useStreamMessage(
         setIsStreaming(false);
       }
     },
-    [onComplete]
+    [callbacks]
   );
 
   return {

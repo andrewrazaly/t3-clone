@@ -5,6 +5,7 @@ import { Check, Globe } from "lucide-react";
 import { cn } from "~/lib/utils";
 
 export const LANGUAGES = [
+    { id: "auto", name: "Auto (Detect)" },
     { id: "english", name: "English" },
     { id: "bahasa-indonesia", name: "Bahasa Indonesia" },
     { id: "bahasa-melayu", name: "Bahasa Melayu" },

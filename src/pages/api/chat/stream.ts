@@ -11,6 +11,35 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { env } from "~/env";
 import { db } from "~/server/db";
 import { TRPCError } from "@trpc/server";
+import fs from "fs";
+import path from "path";
+
+// #region agent log helper
+const DEBUG_LOG_PATH = path.join(process.cwd(), ".cursor", "debug.log");
+let logFileInitialized = false;
+
+function ensureLogClearedOnce() {
+  if (logFileInitialized) return;
+  try {
+    fs.writeFileSync(DEBUG_LOG_PATH, ""); // truncate for a clean run
+  } catch (err) {
+    // swallow; logging must not break handler
+  }
+  logFileInitialized = true;
+}
+
+function logDebug(payload: Record<string, unknown>) {
+  const line = JSON.stringify({
+    sessionId: "debug-session",
+    runId: "pre-fix-server",
+    ...payload,
+    timestamp: Date.now(),
+  });
+  fs.appendFile(DEBUG_LOG_PATH, line + "\n", () => {
+    // swallow errors to avoid impacting streaming
+  });
+}
+// #endregion
 
 export const config = {
   runtime: "nodejs",
@@ -20,6 +49,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  ensureLogClearedOnce();
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -47,6 +78,15 @@ export default async function handler(
 
     let finalChatId = chatId;
     let chat;
+
+    // #region agent log
+    logDebug({
+      hypothesisId: "H1",
+      location: "api/chat/stream:entry",
+      message: "stream handler start",
+      data: { chatId: finalChatId ?? null, model, contentLength: content.length },
+    });
+    // #endregion
 
     // Create or validate chat
     if (!finalChatId) {
@@ -78,7 +118,12 @@ export default async function handler(
     res.setHeader("X-Accel-Buffering", "no");
 
     // Send immediate acknowledgment to establish stream
-    res.write(`data: ${JSON.stringify({ connected: true })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        connected: true,
+        newChatId: finalChatId,
+      })}\n\n`
+    );
     if ((res as any).flush) (res as any).flush();
 
     // Save user message asynchronously (don't wait)
@@ -101,10 +146,20 @@ export default async function handler(
       languageName = "Malay (Jawi script)";
     }
 
-    const languageInstruction =
-      language && language !== "english"
-        ? `Please respond in ${languageName}. `
-        : "";
+    const personaInstruction =
+      "You are a fun, friendly, lightly comedic assistant. Keep responses concise, clear, and helpful.";
+
+    const languageInstruction = (() => {
+      if (!language || language === "auto") {
+        return "Detect the user's language (likely Indonesian, Malay, or English). Respond in the detected language. Preserve nuance and meaning, avoid literal word-for-word translation.";
+      }
+      if (language === "english") {
+        return "Respond in English. If the user writes in another language, translate and respond in English.";
+      }
+      return `Respond in ${languageName}. If the user writes in another language, translate and respond in ${languageName}.`;
+    })();
+
+    const systemPrompt = `${personaInstruction} ${languageInstruction}`;
 
     let fullAiContent = "";
 
@@ -118,7 +173,7 @@ export default async function handler(
         const stream = await anthropic.messages.stream({
           model: model,
           max_tokens: 1000,
-          system: languageInstruction,
+          system: systemPrompt,
           messages: [
             {
               role: "user",
@@ -127,6 +182,8 @@ export default async function handler(
           ],
         });
 
+        let streamedLength = 0;
+
         for await (const chunk of stream) {
           if (
             chunk.type === "content_block_delta" &&
@@ -134,9 +191,18 @@ export default async function handler(
           ) {
             const text = chunk.delta.text;
             fullAiContent += text;
+            streamedLength += text.length;
             res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
             // Force flush to send immediately
             if ((res as any).flush) (res as any).flush();
+            // #region agent log
+            logDebug({
+              hypothesisId: "H2",
+              location: "api/chat/stream:token",
+              message: "anthropic token",
+              data: { chunkLen: text.length, streamedLength },
+            });
+            // #endregion
           }
         }
       } else if (model.startsWith("gpt") || model === "chatgpt-5.1") {
@@ -150,12 +216,10 @@ export default async function handler(
           },
         ];
 
-        if (languageInstruction) {
-          messages.unshift({
-            role: "system",
-            content: languageInstruction,
-          });
-        }
+        messages.unshift({
+          role: "system",
+          content: systemPrompt,
+        });
 
         const apiModel = model === "chatgpt-5.1" ? "gpt-4o" : model;
 
@@ -165,13 +229,24 @@ export default async function handler(
           stream: true,
         });
 
+        let streamedLength = 0;
+
         for await (const chunk of stream) {
           const text = chunk.choices[0]?.delta?.content ?? "";
           if (text) {
             fullAiContent += text;
+            streamedLength += text.length;
             res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
             // Force flush to send immediately
             if ((res as any).flush) (res as any).flush();
+            // #region agent log
+            logDebug({
+              hypothesisId: "H2",
+              location: "api/chat/stream:token",
+              message: "openai token",
+              data: { chunkLen: text.length, streamedLength },
+            });
+            // #endregion
           }
         }
       } else if (model.startsWith("gemini")) {
@@ -179,19 +254,27 @@ export default async function handler(
         const genAI = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
         const geminiModel = genAI.getGenerativeModel({ model: model });
 
-        const prompt = languageInstruction
-          ? `${languageInstruction}\n\n${content}`
-          : content;
+        const prompt = `${systemPrompt}\n\n${content}`;
 
         const result = await geminiModel.generateContentStream(prompt);
+        let streamedLength = 0;
 
         for await (const chunk of result.stream) {
           const text = chunk.text();
           if (text) {
             fullAiContent += text;
+            streamedLength += text.length;
             res.write(`data: ${JSON.stringify({ token: text })}\n\n`);
             // Force flush to send immediately
             if ((res as any).flush) (res as any).flush();
+            // #region agent log
+            logDebug({
+              hypothesisId: "H2",
+              location: "api/chat/stream:token",
+              message: "gemini token",
+              data: { chunkLen: text.length, streamedLength },
+            });
+            // #endregion
           }
         }
       } else {
@@ -241,6 +324,20 @@ export default async function handler(
         })}\n\n`
       );
       if ((res as any).flush) (res as any).flush();
+
+      // #region agent log
+      logDebug({
+        hypothesisId: "H1",
+        location: "api/chat/stream:done",
+        message: "stream complete",
+        data: {
+          chatId: finalChatId,
+          userMessageId: userMessage.id,
+          aiMessageId: aiMessage.id,
+          contentLength: fullAiContent.length,
+        },
+      });
+      // #endregion
     } catch (error) {
       console.error("AI API Error:", error);
       const errorMessage = `Error calling AI model (${model}): ${(error as Error).message}`;
@@ -258,6 +355,14 @@ export default async function handler(
       });
 
       res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+      // #region agent log
+      logDebug({
+        hypothesisId: "H2",
+        location: "api/chat/stream:error",
+        message: "stream error",
+        data: { chatId: finalChatId, error: (error as Error).message },
+      });
+      // #endregion
     }
 
     res.end();

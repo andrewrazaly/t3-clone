@@ -8,28 +8,33 @@ import { type Model } from "./model-selector";
 import { type Language } from "./language-selector";
 import { useStreamMessage } from "~/hooks/use-stream-message";
 
-export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, onChatStarted, onStreamingContent }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language; onChatStarted?: (chatId: string) => void; onStreamingContent?: (content: string, isStreaming: boolean) => void }) {
+export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, onChatStarted, onStreamingContent, onUserMessage, onUserMessageSettled }: { selectedChatId: string | null; selectedModel: Model; selectedLanguage: Language; onChatStarted?: (chatId: string) => void; onStreamingContent?: (content: string, isStreaming: boolean) => void; onUserMessage?: (content: string) => void; onUserMessageSettled?: () => void }) {
     const [input, setInput] = React.useState("");
     const [isSearchEnabled, setIsSearchEnabled] = React.useState(false);
     const utils = api.useUtils();
 
-    const { sendMessage, isStreaming, streamingContent } = useStreamMessage(
-        async (data) => {
-            // Parallelize invalidations for better performance
-            const invalidations = [utils.chat.getAll.invalidate()];
-            if (selectedChatId) {
-                invalidations.push(utils.chat.getMessages.invalidate({ chatId: selectedChatId }));
+    const { sendMessage, isStreaming, streamingContent } = useStreamMessage({
+        onConnected: async (data) => {
+            if (data.newChatId && onChatStarted) {
+                onChatStarted(data.newChatId);
             }
-            if (data.newChatId) {
-                invalidations.push(utils.chat.getMessages.invalidate({ chatId: data.newChatId }));
+        },
+        onComplete: async (data) => {
+            // Parallelize invalidations for better performance
+            const chatIdToInvalidate = data.newChatId ?? selectedChatId;
+            const invalidations = [utils.chat.getAll.invalidate()];
+            if (chatIdToInvalidate) {
+                invalidations.push(utils.chat.getMessages.invalidate({ chatId: chatIdToInvalidate }));
             }
             await Promise.all(invalidations);
 
             if (data.newChatId && onChatStarted) {
                 onChatStarted(data.newChatId);
             }
+
+            onUserMessageSettled?.();
         }
-    );
+    });
 
     // Notify parent of streaming content changes
     React.useEffect(() => {
@@ -41,6 +46,22 @@ export function MessageInput({ selectedChatId, selectedModel, selectedLanguage, 
 
         const messageContent = input;
         setInput("");
+        // #region agent log
+        fetch("http://127.0.0.1:7243/ingest/b2731f27-0823-4a25-97fe-e90cef5a35e7", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                sessionId: "debug-session",
+                runId: "pre-fix",
+                hypothesisId: "H3",
+                location: "message-input.tsx:handleSend",
+                message: "handleSend invoked",
+                data: { selectedChatId, hasInput: !!messageContent, isStreaming },
+                timestamp: Date.now(),
+            }),
+        }).catch(() => {});
+        // #endregion
+        onUserMessage?.(messageContent);
 
         await sendMessage({
             chatId: selectedChatId ?? undefined,
